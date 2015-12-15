@@ -27,7 +27,7 @@ choroplethmap(mapify(df, Provider.STATESUMMARY(), key=:NAME),
               group=:NAME, color=:PCT)
 ```
 
-[Example]("http://penntaylor.github.io/ChoroplethMaps.jl/images/example.svg")
+![Example](http://penntaylor.github.io/ChoroplethMaps.jl/images/example.svg)
 
 Or you could make a direct call into Gadfly.plot instead of calling `choroplethmap`:
 ```julia
