@@ -27,7 +27,9 @@ choroplethmap(mapify(df, Provider.STATESUMMARY(), key=:NAME),
               group=:NAME, color=:PCT)
 ```
 
-The call to `choroplethmap` can be replaced with a direct call into Gadfly.plot if you prefer that:
+[Example]("http://penntaylor.github.io/ChoroplethMaps.jl/images/example.svg")
+
+Or you could make a direct call into Gadfly.plot instead of calling `choroplethmap`:
 ```julia
 using Gadfly
 plot(mapify(df, Provider.STATESUMMARY(), key=:NAME),
@@ -35,10 +37,6 @@ plot(mapify(df, Provider.STATESUMMARY(), key=:NAME),
      Geom.polygon(preserve_order=true, fill=true),
      Coord.cartesian(fixed=true))
 ```
-
-Both `choroplethmap` and `plot` produce the same image:
-
-<< Needs link to image >>
 
 ## Maps are nice, but what's this package all about?
 
