@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Choroplethmaps.jl by penntaylor</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Choroplethmaps.jl</h1>
+      <h2 class="project-tagline">Easy thematic mapping using Gadfly and datasets such as US Census Bureau&#39;s TIGER data.</h2>
+      <a href="https://github.com/penntaylor/ChoroplethMaps.jl" class="btn">View on GitHub</a>
+      <a href="https://github.com/penntaylor/ChoroplethMaps.jl/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/penntaylor/ChoroplethMaps.jl/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="choroplethmaps" class="anchor" href="#choroplethmaps" aria-hidden="true"><span class="octicon octicon-link"></span></a>ChoroplethMaps</h1>
+
+<p>Easy thematic mapping using Gadfly and datasets such as US Census Bureau's TIGER data.</p>
+
+<h2>
+<a id="installing" class="anchor" href="#installing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Installing</h2>
+
+<p>ChoroplethMaps and some of its dependencies are not yet registered with METADATA, so:</p>
+
+<div class="highlight highlight-source-julia"><pre>Pkg<span class="pl-k">.</span><span class="pl-c1">clone</span>(<span class="pl-s"><span class="pl-pds">"</span>https://github.com/FugroRoames/Proj4.jl.git<span class="pl-pds">"</span></span>)
+Pkg<span class="pl-k">.</span><span class="pl-c1">clone</span>(<span class="pl-s"><span class="pl-pds">"</span>https://github.com/penntaylor/DBaseReader.jl.git<span class="pl-pds">"</span></span>)
+Pkg<span class="pl-k">.</span><span class="pl-c1">clone</span>(<span class="pl-s"><span class="pl-pds">"</span>https://github.com/penntaylor/ChoroplethMaps.jl.git<span class="pl-pds">"</span></span>)</pre></div>
+
+<h2>
+<a id="example-use" class="anchor" href="#example-use" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example use</h2>
+
+<div class="highlight highlight-source-julia"><pre><span class="pl-k">using</span> ChoroplethMaps
+<span class="pl-k">using</span> DataFrames
+
+<span class="pl-c"># The data we want to map thematically</span>
+df <span class="pl-k">=</span> <span class="pl-c1">DataFrame</span>(NAME<span class="pl-k">=</span>[<span class="pl-s"><span class="pl-pds">"</span>Alabama<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Arkansas<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Louisiana<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Mississippi<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>Tennessee<span class="pl-pds">"</span></span>],
+PCT<span class="pl-k">=</span>[<span class="pl-c1">26.6673430422</span>, <span class="pl-c1">15.6204437142</span>, <span class="pl-c1">32.4899197277</span>, <span class="pl-c1">37.5052896066</span>, <span class="pl-c1">17.0874767458</span>] )
+
+<span class="pl-c"># Using `choroplethmap` function and `Provider` for low-res State boundary TIGER</span>
+<span class="pl-c1">choroplethmap</span>(<span class="pl-c1">mapify</span>(df, Provider<span class="pl-k">.</span><span class="pl-c1">STATESUMMARY</span>(), key<span class="pl-k">=</span><span class="pl-c1">:NAME</span>),
+              group<span class="pl-k">=</span><span class="pl-c1">:NAME</span>, color<span class="pl-k">=</span><span class="pl-c1">:PCT</span>)</pre></div>
+
+<p>The call to <code>choroplethmap</code> can be replaced with a direct call into Gadfly.plot if you prefer that:</p>
+
+<div class="highlight highlight-source-julia"><pre><span class="pl-k">using</span> Gadfly
+<span class="pl-c1">plot</span>(<span class="pl-c1">mapify</span>(df, Provider<span class="pl-k">.</span><span class="pl-c1">STATESUMMARY</span>(), key<span class="pl-k">=</span><span class="pl-c1">:NAME</span>),
+     x<span class="pl-k">=</span><span class="pl-c1">:CM_X</span>, y<span class="pl-k">=</span><span class="pl-c1">:CM_Y</span>, group<span class="pl-k">=</span><span class="pl-c1">:NAME</span>, color<span class="pl-k">=</span><span class="pl-c1">:PCT</span>,
+     Geom<span class="pl-k">.</span><span class="pl-c1">polygon</span>(preserve_order<span class="pl-k">=</span><span class="pl-c1">true</span>, fill<span class="pl-k">=</span><span class="pl-c1">true</span>),
+     Coord<span class="pl-k">.</span><span class="pl-c1">cartesian</span>(fixed<span class="pl-k">=</span><span class="pl-c1">true</span>))</pre></div>
+
+<p>Both <code>choroplethmap</code> and <code>plot</code> produce the same image:</p>
+
+<p>&lt;&lt; Needs link to image &gt;&gt;</p>
+
+<h2>
+<a id="maps-are-nice-but-whats-this-package-all-about" class="anchor" href="#maps-are-nice-but-whats-this-package-all-about" aria-hidden="true"><span class="octicon octicon-link"></span></a>Maps are nice, but what's this package all about?</h2>
+
+<p>ChoroplethMaps provides three pieces for making choropleth, or thematic, maps:</p>
+
+<ul>
+<li>
+<code>Provider</code>s that download and manage geographic shape data and make the data associated with a given source accessible as a <code>Dict</code> within Julia.</li>
+<li>A <code>mapify</code> function that joins thematic data stored in a <code>DataFrame</code> with the polygons from a <code>Provider</code> in a way that allows Gadfly to plot a choropleth map.</li>
+<li>A convenience function, <code>choroplethmap</code>, that sets up sensible defaults for Gadfly and removes some of the tedium of specifying a plot.</li>
+</ul>
+
+<h2>
+<a id="more-details-okay" class="anchor" href="#more-details-okay" aria-hidden="true"><span class="octicon octicon-link"></span></a>More details? Okay....</h2>
+
+<h3>
+<a id="providers" class="anchor" href="#providers" aria-hidden="true"><span class="octicon octicon-link"></span></a>Provider(s)</h3>
+
+<p>Currently there is a single <code>Provider</code> for TIGER datasets from the US Census Bureau which can be used to automatically download and parse TIGER data from 2010 or later, including the smaller "thematic" boundary datasets from 2014.</p>
+
+<h3>
+<a id="wait-i-just-looked-at-the-ouput-of-mapify-and-a-bunch-of-columns-from-the-provider-are-missing" class="anchor" href="#wait-i-just-looked-at-the-ouput-of-mapify-and-a-bunch-of-columns-from-the-provider-are-missing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Wait, I just looked at the ouput of <code>mapify</code>, and a bunch of columns from the Provider are missing....</h3>
+
+<p>That's by design. <code>mapify</code> strips the returned DataFrame down to the minimal set of columns needed to plot what you've asked it to "mapify". All columns that don't participate in the plot are just eating memory. Some of the TIGER datasets are huge, and there's little justification for leaving all that stuff sitting around. If you specifically want to keep extra columns, use the <code>keepcols</code> argument to <code>mapify</code>. See the next section for an example.</p>
+
+<h3>
+<a id="using-a-column-from-the-provider-as-the-thematic-data" class="anchor" href="#using-a-column-from-the-provider-as-the-thematic-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Using a column from the Provider as the thematic data</h3>
+
+<p>If you want to use a column from the original data as the color feature, you need to do two things: pass the name of the column in the <code>keepcols</code> argument of <code>mapify</code>, and then specify that column as the <code>color</code> argument to either <code>choroplethmap</code> or <code>Gadfly.plot</code>. Here we indicate we want to retain the :ALAND column in the DataFrame returned by <code>mapify</code>:</p>
+
+<div class="highlight highlight-source-julia"><pre><span class="pl-c1">mapify</span>(somedataframe, someprovider, key<span class="pl-k">=</span><span class="pl-c1">:GEOID</span>, keepcols<span class="pl-k">=</span>[<span class="pl-c1">:ALAND</span>])</pre></div>
+
+<h3>
+<a id="joining-on-one-key-and-plotting-on-another" class="anchor" href="#joining-on-one-key-and-plotting-on-another" aria-hidden="true"><span class="octicon octicon-link"></span></a>Joining on one key and plotting on another</h3>
+
+<p>When you want to group shapes based on a key other than the mapify join key (argument "key"), pass that key in as the plotgroup option to <code>mapify</code>. Here we <code>mapify</code> based on :STATEFP, but tell <code>mapify</code> to group the polygons based on the value of :GEOID:</p>
+
+<div class="highlight highlight-source-julia"><pre>mp <span class="pl-k">=</span> <span class="pl-c1">mapify</span>(somedataframe, someprovider, key<span class="pl-k">=</span><span class="pl-c1">:STATEFP</span>, plotgroup<span class="pl-k">=</span><span class="pl-c1">:GEOID</span>, keepcols<span class="pl-k">=</span>[<span class="pl-c1">:ALAND</span>])</pre></div>
+
+<p>A working example:</p>
+
+<div class="highlight highlight-source-julia"><pre>ndf <span class="pl-k">=</span> <span class="pl-c1">DataFrame</span>(STATEFP<span class="pl-k">=</span>[<span class="pl-s"><span class="pl-pds">"</span>06<span class="pl-pds">"</span></span>])
+mp <span class="pl-k">=</span> <span class="pl-c1">mapify</span>(ndf, Provider<span class="pl-k">.</span><span class="pl-c1">COUNTYSUMMARY</span>(), key<span class="pl-k">=</span><span class="pl-c1">:STATEFP</span>, plotgroup<span class="pl-k">=</span><span class="pl-c1">:GEOID</span>, keepcols<span class="pl-k">=</span>[<span class="pl-c1">:ALAND</span>])
+<span class="pl-c1">choroplethmap</span>( mp, group<span class="pl-k">=</span><span class="pl-c1">:GEOID</span>, color<span class="pl-k">=</span><span class="pl-c1">:ALAND</span>)</pre></div>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/penntaylor/ChoroplethMaps.jl">Choroplethmaps.jl</a> is maintained by <a href="https://github.com/penntaylor">penntaylor</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
