@@ -4,7 +4,7 @@ using DataFrames
 using Proj4
 using Gadfly
 
-export mapify, choroplethmap, Provider
+export mapify, choroplethmap, choroplethlayer, Provider
 
 
 include("providers/provider.jl")
@@ -77,17 +77,39 @@ end
 
 
 """
-`choroplethmap(df::DataFrame; group::Symbol=:NAME, color::Symbol=:feature)`
+`choroplethmap(df::DataFrame, args...; group::Symbol=:NAME, color::Symbol=:feature, namedargs...)`
 
 Produces a Gadfly plot using a mapify'd DataFrame. `group` refers to the
 column in `df` that identifies the shapes to be plotted (it "groups" the
 polygon points), and `color` refers to the column containing the statistic
-of interest for the choropleth map.
+of interest for the choropleth map. `args` and `namedargs` are optional, and
+are passed through to Gadfly.plot untouched.
 """
-function choroplethmap(df::DataFrame; group::Symbol=:NAME, color::Symbol=:feature)
+function choroplethmap(df::DataFrame, args...; group::Symbol=:NAME, color::Symbol=:feature, namedargs...)
   Gadfly.plot(df, x=:CM_X, y=:CM_Y, group=group, color=color,
        Geom.polygon(preserve_order=true, fill=true),
-       Coord.cartesian(fixed=true))
+       Coord.cartesian(fixed=true), args...; namedargs...)
+end
+
+
+"""
+`choroplethlayer(df::DataFrame, args...; fill::Bool=true, group::Symbol=:NAME, color::Symbol=:feature, namedargs...)`
+
+Similar to `choroplethmap`, but produces a layer suitable for passing into
+Gadfly.plot. `fill` controls whether the polygons in the layer are filled
+or merely outlines. You likely will want to add
+`Coord.cartesian(fixed=true)` to your Gadfly.plot call.
+"""
+function choroplethlayer(df::DataFrame, args...; fill::Bool=true, group::Symbol=:NAME, color::Symbol=:feature, namedargs...)
+  if fill
+    Gadfly.layer(df, x=:CM_X, y=:CM_Y, group=group, color=color,
+                 Geom.polygon(preserve_order=true, fill=fill), args...; namedargs...)
+  else
+    # Omit the color aesthetic, since it makes no sense here and may not have
+    # been passed in at all
+    Gadfly.layer(df, x=:CM_X, y=:CM_Y, group=group,
+                 Geom.polygon(preserve_order=true, fill=fill), args...)
+  end
 end
 
 
