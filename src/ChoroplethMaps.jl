@@ -3,16 +3,32 @@ module ChoroplethMaps
 using DataFrames
 using Proj4
 using Gadfly
+using Compose
 
-export mapify, choroplethmap, choroplethlayer, Provider
+export mapify, choroplethmap, choroplethlayer, graticule, Provider, projstr
+
+# TODO: To be able to layer the plot over a background tile, use an invocation like this:
+# compose(plot_context(), bitmap("image/png", Array{UInt8}(readall("price.png")), 0, 0, 1, 1))
+#
+# This, unfortunately, has to be passed straight into draw; there is no way to automatically
+# push this back into the usual plot output.
+#
+# I wonder though if I could alter Guide.annotation to allow setting its z-order. Could then
+# use it to place a background image, or to place the graticule below the choropleth map, as
+# is often done.
+#
+# I think Annotation just needs to be altered so that it can be used in either over_guide_position
+# or under_guide_position. Just needs an inner constructor along with an outer ctor that sets
+# over_guide_position as the default.
 
 
 include("providers/provider.jl")
+include("graticule.jl")
 
 """
 `mapify(df::DataFrame, provider::Provider.AbstractProvider;
  key::Symbol=:GEOID, plotgroup::Symbol=:blank_symbol,
- projection::Int=3857, keepcols=[])`
+ projection::AbstractString="epsg:3857", keepcols=[])`
 
 Takes in a DataFrame and returns a new DataFrame containing polygons pulled
 from the `provider`'s geodata, suitable for plotting with Gadfly.
@@ -40,7 +56,7 @@ Example:
 function mapify(df::DataFrame, provider::Provider.AbstractProvider;
                   key::Symbol=:GEOID,
                   plotgroup::Symbol=:blank_symbol,
-                  projection::Int=3857,
+                  projection::AbstractString="epsg:3857",
                   keepcols=[])
 
   polygons = DataFrame(CM_POLYGONS=Provider.polygons(provider))
@@ -54,11 +70,11 @@ function mapify(df::DataFrame, provider::Provider.AbstractProvider;
   joined = join(df, pdata, on=key, kind=:inner)
   joined = splitmultipolygons(joined, plotgroup)
 
-  newdf = add_xy_cols!(similar(joined, 0))
+  newdf = add_xyp_cols!(similar(joined, 0))
   delete!(newdf, :CM_POLYGONS)
 
-  projfrom = Projection(Proj4.epsg[Provider.projection(provider)])
-  projto = Projection(Proj4.epsg[projection])
+  projfrom = Projection(projstr(Provider.projection(provider)))
+  projto = Projection(projstr(projection))
 
   for row in eachrow(joined)
     for pt in row[:CM_POLYGONS]
@@ -69,6 +85,7 @@ function mapify(df::DataFrame, provider::Provider.AbstractProvider;
 
       push!(newdf[:CM_X], tpt[1])
       push!(newdf[:CM_Y], tpt[2])
+      push!(newdf[:CM_P], projection)
     end
   end
 
@@ -83,12 +100,23 @@ Produces a Gadfly plot using a mapify'd DataFrame. `group` refers to the
 column in `df` that identifies the shapes to be plotted (it "groups" the
 polygon points), and `color` refers to the column containing the statistic
 of interest for the choropleth map. `args` and `namedargs` are optional, and
-are passed through to Gadfly.plot untouched.
+are passed through to Gadfly.plot untouched. This function sets up a number of
+defaults for Gadfly. If you intend to heavily style your maps using
+Gadfly.Theme, you may find it easier to copy the code from this function and
+modify the underlying call to Gadfly.plot directly.
 """
-function choroplethmap(df::DataFrame, args...; group::Symbol=:NAME, color::Symbol=:feature, namedargs...)
+function choroplethmap(df::DataFrame, args...; group::Symbol=:NAME, color::Symbol=:feature, graticule::Union{Compose.Context, Bool}=true ,namedargs...)
+  if isa(graticule, Bool)
+    graticule = graticule == false ? compose(context()) : ChoroplethMaps.graticule(df)
+  end
   Gadfly.plot(df, x=:CM_X, y=:CM_Y, group=group, color=color,
-       Geom.polygon(preserve_order=true, fill=true),
-       Coord.cartesian(fixed=true), args...; namedargs...)
+              Geom.polygon(preserve_order=true, fill=true),
+              Coord.cartesian(fixed=true),
+              Guide.annotation(graticule, Gadfly.Guide.under_guide_position),
+              Guide.xticks( label=false), Guide.yticks( label=false),
+              Guide.XLabel(""), Guide.YLabel(""),
+              Theme(grid_color=colorant"rgba(0,0,0,0.0)"),
+              args...; namedargs...)
 end
 
 
@@ -113,6 +141,61 @@ function choroplethlayer(df::DataFrame, args...; fill::Bool=true, group::Symbol=
 end
 
 
+"""
+`projstr(str::AbstractString)`
+
+Returns a Proj4 projection string based on the contents of `str`, which
+can have any of the following forms:
+
+* "EPSG:<wkid>"
+* "ESRI:<wkid>"
+* "<wkid>"
+* "+proj=..."
+
+In each of the first three forms, `<wkid>` refers to an integer well-known id.
+The third form is provided as a convenience, but be aware that it may not
+return the exact projection you expect -- it's better to specify the authority
+explicitly as in the first two forms, if using a wkid.
+The last form represents a valid Proj4 string, resulting in the contents
+of `str` simply being returned as the result.
+"""
+function projstr(str::AbstractString)
+  # Plain Proj4 string?
+  m = match(r"\+proj"i, str)
+  isa(m, RegexMatch) && return str
+
+  # EPSG wkid?
+  m = match(r"epsg:(\d+)"i, str)
+  isa(m, RegexMatch) && return Proj4.epsg[parse(Int64, m.captures[1])]
+
+  # ESRI wkid?
+  m = match(r"esri:(\d+)"i, str)
+  isa(m, RegexMatch) && return Proj4.esri[parse(Int64, m.captures[1])]
+
+  try
+    return projstr(parse(Int64, str))
+  catch
+    error("Unknown crs/srs: $str")
+  end
+end
+
+
+"""
+`projstr(wkid::Integer)`
+
+Returns a Proj4 projection string based on the contents of `wkid`. First
+tries to interpret the wkid as an EPSG code, and, if that fails, tries to
+interpret it as an ESRI code.
+"""
+function projstr(wkid::Integer)
+  try
+    return Proj4.epsg[wkid]
+  catch
+    return Proj4.esri[wkid]
+  end
+end
+
+
 function dropallbut!(df, keep)
   for name in names(df)
     !(name in keep) && delete!(df, name)
@@ -120,9 +203,11 @@ function dropallbut!(df, keep)
 end
 
 
-function add_xy_cols!(df)
+function add_xyp_cols!(df)
   lat = DataArray(Float64[], Bool[])
   lon = DataArray(Float64[], Bool[])
+  prj = DataArray(AbstractString[], Bool[])
+  insert!(df, 1, prj, :CM_P)
   insert!(df, 1, lat, :CM_Y)
   insert!(df, 1, lon, :CM_X)
 end
@@ -183,6 +268,13 @@ function copyrow!(df, row; exclude=Symbol[])
     !(name in exclude) && push!(df[name], row[name])
   end
 end
+
+
+function objdiff(a, b)
+  typeof(a) != typeof(b) && error("Objects must be of same type to diff")
+  return filter((f)->getfield(a, f) != getfield(b, f), fieldnames(a))
+end
+
 
 
 end # module

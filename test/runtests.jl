@@ -8,7 +8,7 @@ using Base.Test
 pv = Provider.STATESUMMARY()
 @test Provider.names(pv) == [:STUSPS, :AWATER, :LSAD, :AFFGEOID, :STATENS,
                              :GEOID, :ALAND, :STATEFP, :NAME]
-@test Provider.projection(pv) == 4269
+@test Provider.projection(pv) == "epsg:4269"
 @test size(Provider.polygons(pv), 1) == 52
 @test Provider.polygons(pv)[1][1][1] == -118.593969
 

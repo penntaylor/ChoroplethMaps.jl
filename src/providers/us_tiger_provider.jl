@@ -5,7 +5,7 @@ type USTigerProvider <: ShapefileProvider
   basename::AbstractString
   url::AbstractString
 
-  projection::Int
+  projection::AbstractString
   polygons::Array
   records::Dict
 
@@ -15,7 +15,7 @@ type USTigerProvider <: ShapefileProvider
                              url::AbstractString="")
     year < 2010 && error("year must be 2010 or greater")
     prov = new(kind, year, basename, url)
-    prov.projection = 4269  # TIGER data is NAD83 / EPSG:4269
+    prov.projection = "epsg:4269"  # TIGER data is NAD83 / EPSG:4269
     _localize(prov)
     prov.polygons = _parseshapes(prov)
     prov.records = _parserecords(prov)

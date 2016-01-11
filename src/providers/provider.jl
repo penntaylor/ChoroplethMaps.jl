@@ -33,10 +33,10 @@ end
 """
 `projection(provider::AbstractProvider)`
 
-Returns the wkid of the Provider's projection as an `Int`
+Returns the wkid of the Provider's crs/srs/projection as an `AbstractString`.
 """
 function projection(provider::AbstractProvider)
-  return 0
+  return ""
 end
 
 # And may optionally implement these two functions for returning record column
