@@ -99,7 +99,8 @@ end
 Produces a Gadfly plot using a mapify'd DataFrame. `group` refers to the
 column in `df` that identifies the shapes to be plotted (it "groups" the
 polygon points), and `color` refers to the column containing the statistic
-of interest for the choropleth map. `args` and `namedargs` are optional, and
+of interest for the choropleth map. Set `graticule=false` to turn off the
+default graticule. `args` and `namedargs` are optional, and
 are passed through to Gadfly.plot untouched. This function sets up a number of
 defaults for Gadfly. If you intend to heavily style your maps using
 Gadfly.Theme, you may find it easier to copy the code from this function and
@@ -112,7 +113,7 @@ function choroplethmap(df::DataFrame, args...; group::Symbol=:NAME, color::Symbo
   Gadfly.plot(df, x=:CM_X, y=:CM_Y, group=group, color=color,
               Geom.polygon(preserve_order=true, fill=true),
               Coord.cartesian(fixed=true),
-              Guide.annotation(graticule, Gadfly.Guide.under_guide_position),
+              Guide.annotation(graticule), #Gadfly.Guide.under_guide_position),
               Guide.xticks( label=false), Guide.yticks( label=false),
               Guide.XLabel(""), Guide.YLabel(""),
               Theme(grid_color=colorant"rgba(0,0,0,0.0)"),

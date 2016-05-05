@@ -8,8 +8,12 @@ ChoroplethMaps and some of its dependencies are not yet registered with METADATA
 
 ```julia
 Pkg.clone("https://github.com/FugroRoames/Proj4.jl.git")
+Pkg.build("Proj4")
+
 Pkg.clone("https://github.com/penntaylor/DBaseReader.jl.git")
 Pkg.clone("https://github.com/penntaylor/ChoroplethMaps.jl.git")
+
+Pkg.add("ZipFile")
 ```
 
 ## Example use
@@ -81,5 +85,3 @@ ndf = DataFrame(STATEFP=["06"])
 mp = mapify(ndf, Provider.COUNTYSUMMARY(), key=:STATEFP, plotgroup=:GEOID, keepcols=[:ALAND])
 choroplethmap( mp, group=:GEOID, color=:ALAND)
 ```
-
-
