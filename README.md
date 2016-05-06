@@ -22,7 +22,7 @@ Pkg.add("ZipFile")
 using ChoroplethMaps
 using DataFrames
 
-# The data we want to map thematically
+# The data we want to map
 df = DataFrame(NAME=["Alabama", "Arkansas", "Louisiana", "Mississippi", "Tennessee"],
 PCT=[26.6673430422, 15.6204437142, 32.4899197277, 37.5052896066, 17.0874767458] )
 
@@ -31,9 +31,18 @@ choroplethmap(mapify(df, Provider.STATESUMMARY(), key=:NAME),
               group=:NAME, color=:PCT)
 ```
 
-![Example](http://penntaylor.github.io/ChoroplethMaps.jl/images/example.svg)
+![Example](http://penntaylor.github.io/ChoroplethMaps.jl/images/example1.svg)
 
-Or you could make a direct call into Gadfly.plot instead of calling `choroplethmap`:
+The previous map is using the default Web Mercator projection (EPSG:3857), but it's
+simple enough to use any other projection that Proj4 knows about. Here we use an
+Albers Equal Area Conic projection:
+
+```julia
+choroplethmap(mapify(df, Provider.STATESUMMARY(), key=:NAME, projection="ESRI:102003"), group=:NAME, color=:PCT)
+```
+![Example](http://penntaylor.github.io/ChoroplethMaps.jl/images/example2.svg)
+
+Alternatively, we could make a direct call into Gadfly.plot instead of calling `choroplethmap`:
 ```julia
 using Gadfly
 plot(mapify(df, Provider.STATESUMMARY(), key=:NAME),
@@ -44,11 +53,11 @@ plot(mapify(df, Provider.STATESUMMARY(), key=:NAME),
 
 ## Maps are nice, but what's this package all about?
 
-ChoroplethMaps provides three pieces for making choropleth, or thematic, maps:
+ChoroplethMaps provides three pieces for making choropleth maps:
 
 * `Provider`s that download and manage geographic shape data and make the data associated with a given source accessible as a `Dict` within Julia.
 * A `mapify` function that joins thematic data stored in a `DataFrame` with the polygons from a `Provider` in a way that allows Gadfly to plot a choropleth map.
-* A convenience function, `choroplethmap`, that sets up sensible defaults for Gadfly and removes some of the tedium of specifying a plot.
+* A convenience function, `choroplethmap`, that sets up sensible defaults for Gadfly and removes some of the tedium of specifying a plot. (There's also a handy `choroplethlayer` function for doing multi-layered maps.)
 
 ## More details? Okay....
 
@@ -85,3 +94,5 @@ ndf = DataFrame(STATEFP=["06"])
 mp = mapify(ndf, Provider.COUNTYSUMMARY(), key=:STATEFP, plotgroup=:GEOID, keepcols=[:ALAND])
 choroplethmap( mp, group=:GEOID, color=:ALAND)
 ```
+
+![Example](http://penntaylor.github.io/ChoroplethMaps.jl/images/example3.svg)
