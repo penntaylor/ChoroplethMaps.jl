@@ -9,21 +9,11 @@ export mapify, choroplethmap, choroplethlayer, graticule, Provider, projstr
 
 # TODO: To be able to layer the plot over a background tile, use an invocation like this:
 # compose(plot_context(), bitmap("image/png", Array{UInt8}(readall("price.png")), 0, 0, 1, 1))
-#
-# This, unfortunately, has to be passed straight into draw; there is no way to automatically
-# push this back into the usual plot output.
-#
-# I wonder though if I could alter Guide.annotation to allow setting its z-order. Could then
-# use it to place a background image, or to place the graticule below the choropleth map, as
-# is often done.
-#
-# I think Annotation just needs to be altered so that it can be used in either over_guide_position
-# or under_guide_position. Just needs an inner constructor along with an outer ctor that sets
-# over_guide_position as the default.
-
+# Hack this in with underguide perhaps?
 
 include("providers/provider.jl")
 include("graticule.jl")
+include("underguide.jl")
 
 """
 `mapify(df::DataFrame, provider::Provider.AbstractProvider;
@@ -113,7 +103,7 @@ function choroplethmap(df::DataFrame, args...; group::Symbol=:NAME, color::Symbo
   Gadfly.plot(df, x=:CM_X, y=:CM_Y, group=group, color=color,
               Geom.polygon(preserve_order=true, fill=true),
               Coord.cartesian(fixed=true),
-              Guide.annotation(graticule), #Gadfly.Guide.under_guide_position),
+              underguide(graticule),
               Guide.xticks( label=false), Guide.yticks( label=false),
               Guide.XLabel(""), Guide.YLabel(""),
               Theme(grid_color=colorant"rgba(0,0,0,0.0)"),
