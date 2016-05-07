@@ -38,7 +38,8 @@ simple enough to use any other projection that Proj4 knows about. Here we use an
 Albers Equal Area Conic projection:
 
 ```julia
-choroplethmap(mapify(df, Provider.STATESUMMARY(), key=:NAME, projection="ESRI:102003"), group=:NAME, color=:PCT)
+choroplethmap(mapify(df, Provider.STATESUMMARY(), key=:NAME, projection="ESRI:102003"),
+              group=:NAME, color=:PCT)
 ```
 ![Example](http://penntaylor.github.io/ChoroplethMaps.jl/images/example2.svg)
 
@@ -64,6 +65,12 @@ ChoroplethMaps provides three pieces for making choropleth maps:
 ### Provider(s)
 
 Currently there is a single `Provider` for TIGER datasets from the US Census Bureau which can be used to automatically download and parse TIGER data from 2010 or later, including the smaller "thematic" boundary datasets from 2014.
+
+To see all available dataset names (eg. STATE, COUNTY, ROADS, etc.), open a Julia REPL, pull in the package
+with `using ChoroplethMaps`, then enter `ChoroplethMaps.Provider.` and press `[Tab]` twice. The dataset names
+will appear in ALL_CAPITAL_LETTERS. These names match up exactly with the names listed at the Census Bureau's
+[ftp site](ftp://ftp2.census.gov/geo/tiger/TIGER2015/). The exception is the 2014 "thematic" data, which
+carries the suffix 'SUMMARY'; eg. `STATESUMMARY`.
 
 
 ### Wait, I just looked at the ouput of `mapify`, and a bunch of columns from the Provider are missing....
